@@ -1,0 +1,5 @@
+check_clocks.c is:
+https://tsn.readthedocs.io/_downloads/f329e8dec804247b1dbb5835bd949e6f/check_clocks.c
+(via https://tsn.readthedocs.io/timesync.html)
+
+check_clocks_time.nl.c is our own variant.
