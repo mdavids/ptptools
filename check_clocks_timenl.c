@@ -85,6 +85,7 @@ const char *port_state_strings[] = {
 
 char ptp_path[PTP_MAX_DEV_PATH];
 int ipvers = 6;
+uint8_t domain = 0;
 
 /*
  * Request and response data structures. Borrowed from linuxptp/msg.h
@@ -144,10 +145,11 @@ struct resp_time_stat {
 void print_usage(void)
 {
 	printf("Check Clocks verifies the state of local clocks to ensure"
-	       " a sane TSN configuration\n");
-	printf("Usage: sudo ./check_clocks -d <interface name> \n");
-	printf("Options for check_clocks are\n");
-	printf(" -d <TSN Ethernet interface name>. This is required\n");
+	       " a sane configuration (v20220219)\n");
+	printf("Usage: sudo ./check_clocks -i <interface name> \n");
+	printf("Options for check_clocks_timenl are\n");
+	printf(" -i <Ethernet interface name>. This is required\n");
+	printf(" -d <Domain> \n");
 	printf(" -4 Select IPv4 uds address (i.e. /var/run/ptp4eno1v4)\n");
 	printf(" -v Verbose - Dumps ptp timestamps and deltas\n");
 	printf(" -h Help - Print the usage\n");
@@ -209,6 +211,9 @@ static void build_ptp_request(struct get_req *ptp_req, uint16_t req_id,
 		TSMT_SET(ptp_req->mgmt.hdr.tsmt, 0, MANAGEMENT);
 
 	ptp_req->mgmt.hdr.ver = PTP_VERSION;
+	
+	// testing TODO
+	ptp_req->mgmt.hdr.domain_num = domain;
 
 	/* Management packets have ZERO in data length */
 	ptp_req->mgmt.hdr.msg_len = htons(sizeof(struct get_req));
@@ -437,6 +442,7 @@ static int check_local_clock(char *ifname, int verbose)
 
 	if (verbose) {
 		printf("ptp path: \t\t%s\n", ptp_path);
+		printf("domain: \t\t%u\n", domain);
 		printf("uds address: \t\t%s\n", ptp_sock);
 		printf("rt tstamp:\t\t%lu or %s", rt, ctime(&ts_rt1.tv_sec));
 		printf("tai tstamp:\t\t%lu or %s", tai, ctime(&ts_tai1.tv_sec));
@@ -479,18 +485,22 @@ int main(int argc, char** argv)
 	int ret, verbose = 0;
 
 	struct option longopts[] = {
-		{ "dev",        required_argument,      NULL,           'd' },
+		{ "interface",  required_argument,      NULL,           'i' },
+		{ "domain",     no_argument,            NULL,           'd' },		
 		{ "udsaddr",    no_argument,            &ipvers,         4  },
 		{ "verbose",    no_argument,            &verbose,        1  },
 		{ "help",       no_argument,            NULL,           'h' },
 		{ 0 }
 	};
 
-	while ((ret = getopt_long(argc, argv, ":d:hv4", longopts, NULL)) != -1) {
+	while ((ret = getopt_long(argc, argv, ":i:d:hv4", longopts, NULL)) != -1) {
 		switch (ret) {
-		case 'd':
+		case 'i':
 			strncpy(ifname, optarg, sizeof(ifname) - 1);
 			break;
+		case 'd':
+			domain = (uint8_t) atoi(optarg);
+			break;			
 		case '4':
                         ipvers = 4;
                         break;
