@@ -3,4 +3,4 @@
 
 - Makefile
 
-- Add support for non-default PTP domain
+[DONE] - Add support for non-default PTP domain
