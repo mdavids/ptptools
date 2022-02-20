@@ -145,7 +145,7 @@ struct resp_time_stat {
 void print_usage(void)
 {
 	printf("Check Clocks verifies the state of local clocks to ensure"
-	       " a sane configuration (v20220219)\n");
+	       " a sane configuration (v20220220)\n");
 	printf("Usage: sudo ./check_clocks -i <interface name> \n");
 	printf("Options for check_clocks_timenl are\n");
 	printf(" -i <Ethernet interface name>. This is required\n");
