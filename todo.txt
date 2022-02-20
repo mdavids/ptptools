@@ -1,8 +1,4 @@
-[NONEED] - Get rid of compiler-warnings
-           (don't see them anymore)
-
 - Makefile
 
-[DONE] - Add support for non-default PTP domain
+- Fix 'TODO' items in source.
 
-- is offset default 0 a good choice?

@@ -86,6 +86,7 @@ const char *port_state_strings[] = {
 char ptp_path[PTP_MAX_DEV_PATH];
 int ipvers = 6;
 uint8_t domain = 0;
+int offset_threshold = 100; // TODO: perhaps somewhat toot ight for us?
 
 /*
  * Request and response data structures. Borrowed from linuxptp/msg.h
@@ -145,7 +146,7 @@ struct resp_time_stat {
 void print_usage(void)
 {
 	printf("Check Clocks verifies the state of local clocks to ensure"
-	       " a sane configuration (v20220220)\n");
+	       " a sane configuration (v20220220-2)\n");
 	printf("Usage: sudo ./check_clocks -i <interface name> \n");
 	printf("Options for check_clocks_timenl are\n");
 	printf(" -i <Ethernet interface name>. This is required\n");
@@ -350,7 +351,7 @@ static int check_ptp_offset(int verbose)
 	int uds_fd, ret = EXIT_FAILURE;
 	bool gptp_profile = false;
 	int port_state;
-	int64_t offset = 0;
+	int64_t offset = -1;
 
 	if (init_sockets(&uds_fd, &dest_addr) != EXIT_SUCCESS)
 		return ret;
@@ -370,13 +371,14 @@ static int check_ptp_offset(int verbose)
 		if (send_wait_recv(uds_fd, &dest_addr, (void *) &port_req, sizeof(struct get_req),
 				   rec_buf, sizeof(rec_buf)) == EXIT_FAILURE) {
 			goto close_socket;
-		}
-	}
+		} // TODO: see if we can prevent the same error message to appear twice because of this
+	}         //       reproduce with: ./check_clocks_timenl -v -i eno3
 
 	sane_port_state = get_port_status(rec_buf, &port_state);
 
 	if (port_state == SLAVE) {
 		/* Set request id to TIME_STATUS_NP */
+		/* similar to: pmc -s /var/run/ptp4leno1v6 -u -b 0 'GET TIME_STATUS_NP' */
 		build_ptp_request(&time_req, TLV_TIME_STATUS_NP, gptp_profile);
 		if (send_wait_recv(uds_fd, &dest_addr, (void *) &time_req, sizeof(struct get_req),
 				   rec_buf, sizeof(rec_buf)) == EXIT_FAILURE) {
@@ -388,10 +390,17 @@ static int check_ptp_offset(int verbose)
 
 	if (verbose) {
 		printf("port state: \t%s (%i)\n", port_state_strings[port_state], port_state);
-		printf("offset: \t%li\n\n", offset);
+		if (offset == -1) {
+			puts("offset: \tn/a (not a SLAVE)\n");
+		}
+		else {
+			printf("offset: \t%li\n", offset);
+			printf("(should ideally be <= %i)\n\n", offset_threshold);
+		};
+
 	}
 
-	if (sane_port_state && offset <= 100) // TODO: 100 may be a little bit too tight for our situation
+	if (sane_port_state && offset <= offset_threshold) // TODO: 100 may be a little bit too tight for our situation
 		ret = EXIT_SUCCESS;
 	else
 		fprintf(stderr, "PTP peer port state and/or offset are not within expected limits.\n");
@@ -537,9 +546,8 @@ int main(int argc, char** argv)
 
 	if (ret == EXIT_SUCCESS)
 		printf("Clocks on this system are synchronized.\n");
-//	else
-//		fprintf(stderr, "Please verify ptp4l and phc config and restart "
-//			"them if necessary to synchronize the clocks !\n");
+	else
+		fprintf(stderr, "(did you use the proper domain number with '-d' ?)\n");
 
 	return ret;
 }
