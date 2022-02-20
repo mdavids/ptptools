@@ -4,3 +4,5 @@
 - Makefile
 
 [DONE] - Add support for non-default PTP domain
+
+- is offset default 0 a good choice?

@@ -193,7 +193,7 @@ static void open_phc_fd(int* fd_ptp, char* ifname)
 
 	*fd_ptp = open(ptp_path, O_RDONLY);
 	if (*fd_ptp < 0) {
-		perror("Couldn't open the PTP fd. Did you forget to run with sudo?");
+		perror("Couldn't open the PTP fd (did you run with sudo?)");
 		exit(EXIT_FAILURE);
 	}
 
@@ -212,7 +212,6 @@ static void build_ptp_request(struct get_req *ptp_req, uint16_t req_id,
 
 	ptp_req->mgmt.hdr.ver = PTP_VERSION;
 	
-	// testing TODO
 	ptp_req->mgmt.hdr.domain_num = domain;
 
 	/* Management packets have ZERO in data length */
@@ -392,7 +391,7 @@ static int check_ptp_offset(int verbose)
 		printf("offset: \t%li\n\n", offset);
 	}
 
-	if (sane_port_state && offset <= 100)
+	if (sane_port_state && offset <= 100) // TODO: 100 may be a little bit too tight for our situation
 		ret = EXIT_SUCCESS;
 	else
 		fprintf(stderr, "PTP peer port state and/or offset are not within expected limits.\n");
@@ -538,9 +537,9 @@ int main(int argc, char** argv)
 
 	if (ret == EXIT_SUCCESS)
 		printf("Clocks on this system are synchronized.\n");
-	else
-		fprintf(stderr, "Please verify ptp4l and phc config and restart "
-			"them if necessary to synchronize the clocks !\n");
+//	else
+//		fprintf(stderr, "Please verify ptp4l and phc config and restart "
+//			"them if necessary to synchronize the clocks !\n");
 
 	return ret;
 }
