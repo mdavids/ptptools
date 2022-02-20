@@ -2,3 +2,7 @@
 
 - Fix 'TODO' items in source.
 
+Note:
+
+- Compiles without warnings on Ubuntu 20.04
+  but generates warnings on 18.04.

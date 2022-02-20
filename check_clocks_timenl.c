@@ -394,7 +394,7 @@ static int check_ptp_offset(int verbose)
 			puts("offset: \tn/a (not a SLAVE)\n");
 		}
 		else {
-			printf("offset: \t%lli\n", offset);
+			printf("offset: \t%li\n", offset);
 			printf("(should ideally be <= %i)\n\n", offset_threshold);
 		};
 
@@ -452,14 +452,14 @@ static int check_local_clock(char *ifname, int verbose)
 		printf("ptp path: \t\t%s\n", ptp_path);
 		printf("domain: \t\t%u\n", domain);
 		printf("uds address: \t\t%s\n", ptp_sock);
-		printf("rt tstamp:\t\t%llu or %s", rt, ctime(&ts_rt1.tv_sec));
-		printf("tai tstamp:\t\t%llu or %s", tai, ctime(&ts_tai1.tv_sec));
-		printf("phc tstamp:\t\t%llu or %s", ptp, ctime(&ts_ptp1.tv_sec));
-		printf("rt read latency:\t%llu\n", lat_rt);
-		printf("tai read latency:\t%llu\n", lat_tai);
-		printf("phc read latency:\t%llu\n", lat_ptp);
-		printf("phc-rt delta:\t\t%lld\n", phc_rt);
-		printf("phc-tai delta:\t\t%lld\n\n", phc_tai);
+		printf("rt tstamp:\t\t%lu or %s", rt, ctime(&ts_rt1.tv_sec));
+		printf("tai tstamp:\t\t%lu or %s", tai, ctime(&ts_tai1.tv_sec));
+		printf("phc tstamp:\t\t%lu or %s", ptp, ctime(&ts_ptp1.tv_sec));
+		printf("rt read latency:\t%lu\n", lat_rt);
+		printf("tai read latency:\t%lu\n", lat_tai);
+		printf("phc read latency:\t%lu\n", lat_ptp);
+		printf("phc-rt delta:\t\t%ld\n", phc_rt);
+		printf("phc-tai delta:\t\t%ld\n\n", phc_tai);
 	}
 
 	if (llabs(phc_rt - UTC_OFFSET * ONE_SEC) >= 50000) {
