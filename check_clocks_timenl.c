@@ -84,7 +84,8 @@ const char *port_state_strings[] = {
 };
 
 char ptp_path[PTP_MAX_DEV_PATH];
-int ipvers = 6;
+int nwtrans;
+char nwtransstr[3] = "v6"; // Transport; either 2 (L2) 4 (IPv4) or 6 (IPv6)
 uint8_t domain = 0;
 int offset_threshold = 100; // TODO: perhaps somewhat toot ight for us?
 
@@ -151,9 +152,10 @@ void print_usage(void)
 	printf("Options for check_clocks_timenl are\n");
 	printf(" -i <Ethernet interface name>. This is required\n");
 	printf(" -d <Domain> \n");
-	printf(" -4 Select IPv4 uds address (i.e. /var/run/ptp4eno1v4)\n");
+	printf(" -t <network transport> (2, 4 or 6 of L2, IPv4 or IPv6, which is also the default)\n");
 	printf(" -v Verbose - Dumps ptp timestamps and deltas\n");
-	printf(" -h Help - Print the usage\n");
+	printf(" -h Help - Print the usage\n\n");
+	printf("The uds address used is constructed from -i and -t (i.e. /var/run/ptp4eno1v4 or i.e. /var/run/ptp4eno3l2)\n");
 }
 
 static inline clockid_t make_process_cpuclock(const unsigned int pid,
@@ -491,17 +493,17 @@ int main(int argc, char** argv)
 {
 	char ifname[IFNAMSIZ] = { };
 	int ret, verbose = 0;
-
+	
 	struct option longopts[] = {
 		{ "interface",  required_argument,      NULL,           'i' },
 		{ "domain",     no_argument,            NULL,           'd' },		
-		{ "udsaddr",    no_argument,            &ipvers,         4  },
+		{ "udsaddr",    no_argument,            NULL,           't' },
 		{ "verbose",    no_argument,            &verbose,        1  },
 		{ "help",       no_argument,            NULL,           'h' },
 		{ 0 }
 	};
 
-	while ((ret = getopt_long(argc, argv, ":i:d:hv4", longopts, NULL)) != -1) {
+	while ((ret = getopt_long(argc, argv, ":i:d:t:hv", longopts, NULL)) != -1) {
 		switch (ret) {
 		case 'i':
 			strncpy(ifname, optarg, sizeof(ifname) - 1);
@@ -509,9 +511,23 @@ int main(int argc, char** argv)
 		case 'd':
 			domain = (uint8_t) atoi(optarg);
 			break;			
-		case '4':
-                        ipvers = 4;
-                        break;
+		case 't':
+                        nwtrans = (uint8_t) atoi(optarg);
+                        switch(nwtrans) {
+			case 2:
+			      strcpy(nwtransstr, "l2");
+			      break;
+			case 4:
+			      strcpy(nwtransstr, "v4");
+			      break;
+			case 6:
+			      strcpy(nwtransstr, "v6");
+			      break;
+			default:
+			      fprintf(stderr, "option '-%c' is invalid !\n", optopt);
+			      print_usage();
+			      return EXIT_FAILURE;
+			}
 		case 'v':
 			verbose = 1;
 			printf("Dumping timestamps and deltas\n\n");
@@ -539,7 +555,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	snprintf(ptp_sock, ptp_sock_size, "/var/run/ptp4l%sv%i\n", ifname, ipvers);
+	snprintf(ptp_sock, ptp_sock_size, "/var/run/ptp4l%s%s\n", ifname, nwtransstr);
 	
 	/* The Bitwise OR of the return values is intentional */
 	ret = check_local_clock(ifname, verbose) | check_ptp_offset(verbose);
